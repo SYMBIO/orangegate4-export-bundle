@@ -10,6 +10,7 @@ namespace Symbio\OrangeGate\ExportBundle\Service;
 
 use Symbio\OrangeGate\ExportBundle\Exception\InvalidArgumentException;
 use Symbio\OrangeGate\PageBundle\Entity\Site;
+use Doctrine\Common\Collections\ArrayCollection;
 
 class Serializer
 {
@@ -58,27 +59,119 @@ class Serializer
 
     public function exportPagesForSite($site)
     {
-        throw new \Exception('Not implemented yet');
+        $site = $this->getSite($site);
+
+        $pages = $this->entityManager->getRepository('SymbioOrangeGatePageBundle:Page')->findBy([
+            'site' => $site,
+            'parent' => null
+        ]);
+
+        foreach ($pages as $page) {
+            $this->pageWalker($page);
+        }
+
+        return $this->serialize($pages);
     }
 
     public function exportStringsForSite($site)
     {
-        throw new \Exception('Not implemented yet');
+        $site = $this->getSite($site);
+
+        $strings = $this->entityManager->getRepository('SymbioOrangeGateTranslationBundle:LanguageToken')->findBy([
+            'site' => $site
+        ]);
+
+        foreach ($strings as $string) {
+            $string->setSite(null);
+        }
+
+        return $this->serialize($strings);
     }
 
     public function exportContextsForSite($site)
     {
-        throw new \Exception('Not implemented yet');
+        $site = $this->getSite($site);
+
+        $contexts = $this->entityManager->getRepository('SymbioOrangeGateClassificationBundle:Context')->findBy([
+            'site' => $site
+        ]);
+
+        foreach ($contexts as $context) {
+            $context->setCreatedAt(null);
+            $context->setUpdatedAt(null);
+            $context->setSite(null);
+        }
+
+        return $this->serialize($contexts);
     }
 
     public function exportCategoriesForSite($site)
     {
-        throw new \Exception('Not implemented yet');
+        $site = $this->getSite($site);
+
+        $contexts = $this->entityManager->getRepository('SymbioOrangeGateClassificationBundle:Context')->findBy([
+            'site' => $site
+        ]);
+
+        $categories = $this->entityManager->getRepository('SymbioOrangeGateClassificationBundle:Category')->findBy([
+            'context' => $contexts
+        ]);
+
+        foreach ($categories as $category) {
+            //todo unable to do this
+//            $category->setCreatedAt(null);
+//            $category->setUpdatedAt(null);
+            $context = $category->getContext();
+            $context->setCreatedAt(null);
+            $context->setUpdatedAt(null);
+            $context->setSite(null);
+        }
+
+        return $this->serialize($categories);
     }
 
     public function exportMediaForSite($site)
     {
-        throw new \Exception('Not implemented yet');
+        $site = $this->getSite($site);
+
+        $contexts = $this->entityManager->getRepository('SymbioOrangeGateClassificationBundle:Context')->findBy([
+            'site' => $site
+        ]);
+
+        $media = $this->entityManager->getRepository('SymbioOrangeGateMediaBundle:Media')->findBy([
+            'context' => $contexts
+        ]);
+
+        foreach ($media as $item) {
+            $item->setCreatedAt(null);
+            $item->setUpdatedAt(null);
+            $category = $item->getCategory();
+//            $category->setCreatedAt(null);
+//            $category->setUpdatedAt(null);
+            $context = $category->getContext();
+            $context->setCreatedAt(null);
+            $context->setUpdatedAt(null);
+            $context->setSite(null);
+        }
+
+        return $this->serialize($media);
+    }
+
+    public function exportGalleryForSite($site)
+    {
+        $site = $this->getSite($site);
+
+        $media = $this->entityManager->getRepository('SymbioOrangeGateMediaBundle:Gallery')->findBy([
+            'site' => $site
+        ]);
+
+        foreach ($media as $category) {
+            $category->setCreatedAt(null);
+            $category->setUpdatedAt(null);
+            $category->setSite(null);
+        }
+
+        return $this->serialize($media);
     }
 
     /**
@@ -160,5 +253,31 @@ class Serializer
     protected function serialize($data)
     {
         return $this->serializer->serialize($data, $this->serializeMethod);
+    }
+
+    protected function pageWalker($page) {
+        $page->setSite(null);
+        $page->setCreatedAt(null);
+        $page->setUpdatedAt(null);
+        $page->setSnapshots(new ArrayCollection());
+
+        foreach ($page->getBlocks() as $block) {
+            $this->blockWalker($block);
+        }
+
+        foreach ($page->getChildren() as $child) {
+            $this->pageWalker($child);
+        }
+    }
+
+    protected function blockWalker($block) {
+        $block->setSite(null);
+        $block->setCreatedAt(null);
+        $block->setUpdatedAt(null);
+//        $block->setSnapshots(new ArrayCollection());
+
+        foreach ($block->getChildren() as $child) {
+            $this->blockWalker($child);
+        }
     }
 }

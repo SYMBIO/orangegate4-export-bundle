@@ -35,7 +35,8 @@ class ZipExporter
         ['categories', 'exportCategoriesForSite'],
         ['pages', 'exportPagesForSite'],
         ['translations', 'exportStringsForSite'],
-        ['media', 'exportMediaForSite']
+        ['gallery', 'exportGalleryForSite'],
+        ['media', 'exportMediaForSite'],
     ];
 
     /**
