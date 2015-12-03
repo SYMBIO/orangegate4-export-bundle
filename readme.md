@@ -1,6 +1,6 @@
-# Symbio OrangeGate Form Bundle
+# Symbio OrangeGate Export Bundle
 
-TODO
+Bundle that exports site, languageversions, page, blocks, snapshots, translations, media, context, category and files.
 
 **Work in progress... - this bundle is not usable yet**
 
@@ -11,4 +11,8 @@ Prefered way is via composer:
 
 Then add bundle initialization to ````AppKernel.php````
 
-    new Symbio\OrangeGate\FormBundle\SymbioOrangeGateExportBundle()
+    new Symbio\OrangeGate\ExportBundle\SymbioOrangeGateExportBundle()
+
+## Usage
+
+You can export whole site by calling  

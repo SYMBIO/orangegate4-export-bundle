@@ -1,0 +1,8 @@
+services:
+    orangegate.export.serializer:
+        class: Symbio\OrangeGate\ExportBundle\Service\Serializer
+        arguments: [ @serializer, @doctrine.orm.entity_manager]
+
+    orangegate.export.zipexporter:
+        class: Symbio\OrangeGate\ExportBundle\Service\ZipExporter
+        arguments: [@orangegate.export.serializer]
