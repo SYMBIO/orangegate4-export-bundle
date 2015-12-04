@@ -32,9 +32,11 @@ class ExportSiteCommand extends ContainerAwareCommand implements EventSubscriber
     public static function getSubscribedEvents()
     {
         return [
-            'export.before' => 'beforeExportLog',
+            'export.db.object.before' => 'beforeExportLog',
             'zip.close.before' => 'beforeCloseLog',
             'zip.error' => 'zipErrorLog',
+            'zip.file.error' => 'zipErrorLog',
+            'zip.files.before' => 'beforeFilesLog'
         ];
     }
 
@@ -57,6 +59,14 @@ class ExportSiteCommand extends ContainerAwareCommand implements EventSubscriber
         if (null !== $this->output) {
             $this->output->writeln('Closing zip...');
         }
+    }
+
+    /**
+     * Writes log before files starts to be exported
+     */
+    public function beforeFilesLog()
+    {
+        $this->output->writeln('Exporting media files...');
     }
 
     /**

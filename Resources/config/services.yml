@@ -3,6 +3,11 @@ services:
         class: Symbio\OrangeGate\ExportBundle\Service\Serializer
         arguments: [ @serializer, @doctrine.orm.entity_manager]
 
+    orangegate.export.fileexporter:
+        class: Symbio\OrangeGate\ExportBundle\Service\MediaFileExporter
+        arguments: [ @sonata.media.twig.extension, @doctrine.orm.entity_manager, %kernel.root_dir%]
+
+
     orangegate.export.zipexporter:
         class: Symbio\OrangeGate\ExportBundle\Service\ZipExporter
-        arguments: [@orangegate.export.serializer]
+        arguments: [@orangegate.export.serializer, @orangegate.export.fileexporter]

@@ -22,9 +22,19 @@ class ZipExporter
     private $serializer;
 
     /**
+     * @var MediaFileExporter
+     */
+    private $mediaFileExporter;
+
+    /**
      * @var EventDispatcher
      */
     private $eventDispatcher;
+
+    /**
+     * @var int
+     */
+    private $errCnt = 0;
 
     /**
      * @var array
@@ -42,10 +52,12 @@ class ZipExporter
     /**
      * ZipExporter constructor.
      * @param $serializer
+     * @param $mediaFileExporter
      */
-    public function __construct($serializer)
+    public function __construct($serializer, $mediaFileExporter)
     {
         $this->serializer = $serializer;
+        $this->mediaFileExporter = $mediaFileExporter;
         $this->eventDispatcher = new EventDispatcher();
     }
 
@@ -57,16 +69,18 @@ class ZipExporter
      */
     public function exportSiteToFile($site, $filename)
     {
+        $this->errCnt = 0;
         try {
             // prepare zip file
             $this->eventDispatcher->dispatch('zip.open.before');
             $zip = $this->createZip($filename);
             $this->eventDispatcher->dispatch('zip.open.after');
 
-            // export
-            foreach ($this->exportOrder as $item) {
-                $this->exportItem($zip, $item[0], $item[1], $site);
-            }
+            // export db data
+            $this->exportDbData($zip, $site);
+
+            // export filesystem
+            $this->exportMediaFiles($zip, $site);
 
             // close archive
             $this->eventDispatcher->dispatch('zip.close.before');
@@ -74,14 +88,13 @@ class ZipExporter
             $this->eventDispatcher->dispatch('zip.close.after');
             unset($zip);
 
-            return true;
-
         } catch (InvalidArgumentException $e) {
+            ++$this->errCnt;
             $this->eventDispatcher->dispatch('zip.error', new ZipErrorEvent('ERROR exporting site: ' . $e->getMessage()));
 
         } catch (\Exception $e) {
+            ++$this->errCnt;
             $this->eventDispatcher->dispatch('zip.error', new ZipErrorEvent('ERROR while exporting site: ' . $e->getMessage()));
-
             $this->eventDispatcher->dispatch('zip.error', new ZipErrorEvent('Rollbacking...'));
 
             if (isset($zip)) {
@@ -92,7 +105,7 @@ class ZipExporter
             }
         }
 
-        return false;
+        return $this->errCnt === 0;
     }
 
     /**
@@ -112,11 +125,28 @@ class ZipExporter
     }
 
     /**
+     * @return MediaFileExporter
+     */
+    public function getMediaFileExporter()
+    {
+        return $this->mediaFileExporter;
+    }
+
+
+    /**
      * @return array
      */
     public function getExportOrder()
     {
         return $this->exportOrder;
+    }
+
+    /**
+     * @return int
+     */
+    public function getErrCnt()
+    {
+        return $this->errCnt;
     }
 
     /**
@@ -155,10 +185,62 @@ class ZipExporter
      * @param string $methodName
      * @param int|Site $site
      */
-    protected function exportItem($zip, $name, $methodName, $site) {
-        $this->eventDispatcher->dispatch('export.before', new ExportEvent($name));
+    protected function exportDbItem($zip, $name, $methodName, $site)
+    {
+        $ev = new ExportEvent($name);
+
+        $this->eventDispatcher->dispatch('export.db.object.before', $ev);
         $zip->addFromString($name . '.json', $this->serializer->$methodName($site));
-        $this->eventDispatcher->dispatch('export.after', new ExportEvent($name));
+        $this->eventDispatcher->dispatch('export.db.object.after', $ev);
     }
 
+    /**
+     * @param \ZipArchive $zip
+     * @param string $archiveFileName
+     * @param string $filepath
+     */
+    protected function exportFile($zip, $archiveFileName, $filepath)
+    {
+        $ev = new ExportEvent($filepath);
+
+        $this->eventDispatcher->dispatch('zip.file.before', $ev);
+
+        if (is_readable($filepath)) {
+            $zip->addFile($filepath, $archiveFileName);
+        } else {
+            ++$this->errCnt;
+            $this->eventDispatcher->dispatch('zip.file.error', new ZipErrorEvent('File ' . $filepath . ' doesn\'t exists or cannot be read'));
+        }
+
+        $this->eventDispatcher->dispatch('zip.file.after', $ev);
+    }
+
+    /**
+     * @param \ZipArchive $zip
+     * @param Site $site
+     */
+    protected function exportDbData($zip, $site)
+    {
+        $this->eventDispatcher->dispatch('zip.db.before');
+        foreach ($this->exportOrder as $item) {
+            $this->exportDbItem($zip, $item[0], $item[1], $site);
+        }
+        $this->eventDispatcher->dispatch('zip.db.after');
+    }
+
+    /**
+     * @param \ZipArchive $zip
+     * @param Site $site
+     */
+    protected function exportMediaFiles($zip, $site)
+    {
+        $dirname = 'uploads';
+        $zip->addEmptyDir($dirname);
+
+        $this->eventDispatcher->dispatch('zip.files.before');
+        foreach ($this->mediaFileExporter->exportMediaFilesForSite($site) as $filename => $filepath) {
+            $this->exportFile($zip, $dirname . '/' . $filename, $filepath);
+        }
+        $this->eventDispatcher->dispatch('zip.files.after');
+    }
 }
