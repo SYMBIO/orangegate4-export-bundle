@@ -1,0 +1,15 @@
+Sonata\PageBundle\Model\Site:
+    properties:
+        enabled:
+            type: boolean
+        name:
+            type: string
+        host:
+            type: string
+        isDefault:
+            type: boolean
+        locale:
+            type: string
+        formats:
+            type: array
+            exclude: true

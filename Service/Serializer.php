@@ -11,6 +11,7 @@ namespace Symbio\OrangeGate\ExportBundle\Service;
 use Symbio\OrangeGate\ExportBundle\Exception\InvalidArgumentException;
 use Symbio\OrangeGate\PageBundle\Entity\Site;
 use Doctrine\Common\Collections\ArrayCollection;
+use JMS\Serializer\SerializerBuilder;
 
 class Serializer
 {
@@ -37,7 +38,15 @@ class Serializer
      */
     public function __construct($serializer, $entityManager)
     {
-        $this->serializer = $serializer;
+        if ($serializer === NULL) {
+           $this->serializer = SerializerBuilder::create()
+            ->addMetadataDir(__DIR__ . '/../Resources/serializer')
+            ->build()
+        ;
+        } else {
+            $this->serializer = $serializer;
+        }
+
         $this->entityManager = $entityManager;
     }
 
@@ -46,6 +55,7 @@ class Serializer
     {
         $site = $this->getSite($site);
 
+        // todo
         $site->setCreatedAt(null);
         $site->setUpdatedAt(null);
 

@@ -1,0 +1,36 @@
+Symbio\OrangeGate\PageBundle\Entity\Site:
+    properties:
+        id:
+            type: integer
+            exclude: true
+        name:
+            type: string
+        enabled:
+            type: boolean
+        host:
+            type: string
+        slug:
+            type: string
+        locale:
+            type: string
+        formats:
+            type: array
+            exclude: true
+        relativePath:
+            type: string
+        isDefault:
+            type: boolean
+        createdAt:
+            type: DateTime
+            exclude: true
+        updatedAt:
+            type: DateTime
+            exclude: true
+        created_at:
+            exclude: true
+            type: DateTime
+        updated_at:
+            exclude: true
+            type: DateTime
+        languageVersions:
+            type: ArrayCollection<string, Symbio\OrangeGate\PageBundle\Entity\LanguageVersion>

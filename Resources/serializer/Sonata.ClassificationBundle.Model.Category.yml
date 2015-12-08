@@ -1,0 +1,28 @@
+Sonata\ClassificationBundle\Model\Category:
+    properties:
+        name:
+            type: string
+        createdAt:
+            type: DateTime
+            exclude: true
+        updatedAt:
+            type: DateTime
+            exclude: true
+        enabled:
+            type: boolean
+        slug:
+            type: string
+        description:
+            type: string
+        position:
+            type: integer
+        children:
+            type: ArrayCollection<Sonata\ClassificationBundle\Model\Category>
+        parent:
+            type: Sonata\ClassificationBundle\Model\Category
+            exclude: true
+        media:
+            exclude: true
+        #context:
+        #    type: Sonata\ClassificationBundle\Model\Conutext
+

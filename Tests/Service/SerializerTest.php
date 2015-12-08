@@ -7,6 +7,7 @@
  */
 namespace Symbio\OrangeGate\ExportBundle\Tests\Service;
 
+use Doctrine\Common\Collections\ArrayCollection;
 use Symbio\OrangeGate\ExportBundle\Service\Serializer;
 use Symbio\OrangeGate\PageBundle\Entity\Site;
 use Symbio\OrangeGate\ClassificationBundle\Entity\Context;
@@ -97,8 +98,8 @@ class SerializerTest extends \PHPUnit_Framework_TestCase
 
         $this->assertEquals(
             '{"enabled":true,"name":"\u010cesk\u00e1 vejce","host":"localhost","relative_path":"\/ceska-vejce","is_default":false,"formats":[],'
-            . '"locale":"cs","id":8,"language_versions":{"cs":{"enabled":true,"name":"\u010ce\u0161tina","host":"ceskavejce.agrofert.test.symbiodigital.com",'
-            . '"is_default":true,formats:[],"locale":"cs","id":5}},"slug":"ceska-vejce"}',
+            . '"locale":"cs","language_versions":{"cs":{"enabled":true,"name":"\u010ce\u0161tina","host":"ceskavejce.agrofert.test.symbiodigital.com",'
+            . '"is_default":true,"formats":[],"locale":"cs"}},"slug":"ceska-vejce"}',
             $this->exporter->exportSite($site)
         );
     }
@@ -171,7 +172,9 @@ class SerializerTest extends \PHPUnit_Framework_TestCase
 
     protected function setUp()
     {
-        $this->serializer = SerializerBuilder::create()->build();
+        $this->serializer = SerializerBuilder::create()
+            ->addMetadataDir(__DIR__ . '/../../Resources/serializer')
+            ->build();
 
         $this->em = $this->getMockBuilder('\Doctrine\Common\Persistence\ObjectManager')
             ->disableOriginalConstructor()
@@ -191,7 +194,7 @@ class SerializerTest extends \PHPUnit_Framework_TestCase
         $site->setSlug('ceska-vejce');
         $site->setCreatedAt(new \DateTime('2015-10-15 17:14:22'));
         $site->setUpdatedAt(new \DateTime('2015-10-29 10:20:13'));
-        //$site->setFormats([]);
+//        $site->setFormats(new ArrayCollection());
 
         $lv = new LanguageVersion();
         $lv->setId(5);

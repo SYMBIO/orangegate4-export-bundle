@@ -1,0 +1,15 @@
+Sonata\ClassificationBundle\Model\Context:
+    properties:
+        id:
+            type: string
+        name:
+            type: string
+        createdAt:
+            type: DateTime
+            exclude: true
+        updatedAt:
+            type: DateTime
+            exclude: true
+        enabled:
+            type: boolean
+

@@ -43,12 +43,10 @@ class Import
     /**
      * Import constructor.
      * @param int|null $id
-     * @param string|null $status
      */
-    public function __construct($id = null, $status = null)
+    public function __construct($id = null)
     {
         $this->id = $id;
-        $this->status = $status;
         $this->maps = new ArrayCollection();
     }
 

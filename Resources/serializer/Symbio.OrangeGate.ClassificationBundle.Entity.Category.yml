@@ -1,0 +1,13 @@
+Symbio\OrangeGate\ClassificationBundle\Entity\Category:
+    properties:
+        id:
+            type: integer
+        context:
+            type: Symbio\OrangeGate\ClassificationBundle\Entity\Context
+        parent:
+            exlclude: true
+            type: Symbio\OrangeGate\ClassificationBundle\Entity\Category
+        media:
+            exlude: true
+            type: Symbio\OrangeGate\MediaBundle\Entity\Media
+

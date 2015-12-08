@@ -1,0 +1,9 @@
+Symbio\OrangeGate\TranslationBundle\Entity\LanguageToken:
+    properties:
+        id:
+            type: integer
+            exclude: true
+        token:
+            type: string
+        translations:
+            type: ArrayCollection<Symbio\OrangeGate\TranslationBundle\Entity\LanguageTranslation>

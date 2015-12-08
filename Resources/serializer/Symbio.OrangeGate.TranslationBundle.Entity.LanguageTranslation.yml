@@ -1,0 +1,11 @@
+Symbio\OrangeGate\TranslationBundle\Entity\LanguageTranslation:
+    properties:
+        id:
+            type: integer
+            exclude: true
+        catalogue:
+            type: string
+        translation:
+            type: string
+        language:
+            type: string

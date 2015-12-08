@@ -1,0 +1,7 @@
+Symbio\OrangeGate\ClassificationBundle\Entity\Context:
+    properties:
+        id:
+            type: string
+        site:
+            exlude: true
+            type: Symbio\OrangeGate\PageBundle\Entity\Site
