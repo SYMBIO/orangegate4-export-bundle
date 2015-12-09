@@ -1,0 +1,16 @@
+Symbio\OrangeGate\MediaBundle\Entity\Gallery:
+    properties:
+        id:
+            type: integer
+        name:
+            type: string
+        enabled:
+            type: boolean
+        slug:
+            type: string
+        galleryHasMedias:
+            type: ArrayCollection<Symbio\OrangeGate\MediaBundle\Entity\GalleryHasMedia>
+            exclude: true
+        translations:
+            type: ArrayCollection<Symbio\OrangeGate\MediaBundle\Entity\GalleryTranslation>
+

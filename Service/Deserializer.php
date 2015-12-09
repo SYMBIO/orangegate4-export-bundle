@@ -13,6 +13,7 @@ use Symbio\OrangeGate\ExportBundle\Exception\InvalidArgumentException;
 use Symbio\OrangeGate\PageBundle\Entity\Site;
 use JMS\Serializer\SerializerBuilder;
 use Symbio\OrangeGate\ExportBundle\Entity\Import;
+use Doctrine\Common\Collections\ArrayCollection;
 
 class Deserializer
 {
@@ -150,6 +151,36 @@ class Deserializer
         }
 
         return $strings;
+    }
+
+    public function createGalleryForSite($inputStr, $site)
+    {
+        $items = $this->serializer->deserialize(
+            $inputStr,
+            'ArrayCollection<Symbio\OrangeGate\MediaBundle\Entity\Gallery>',
+            $this->serializeMethod
+        );
+
+        foreach ($items as $gallery) {
+            $gallery->setSite($site);
+            $gallery->setGalleryHasMedias(new ArrayCollection());
+
+            $oldId = $gallery->getId();
+
+            $this->entityManager->persist($gallery);
+            $this->entityManager->flush();
+
+            $this->addImportMap('Gallery', $oldId, $gallery->getId());
+
+            foreach ($gallery->getTranslations() as $translation) {
+                $translation->setObject($gallery);
+                $this->entityManager->persist($translation);
+            }
+
+            $this->entityManager->flush();
+        }
+
+        return $items;
     }
 
     protected function addImportMap($objectName, $oldId, $newId)

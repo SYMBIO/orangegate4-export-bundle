@@ -1,0 +1,13 @@
+Symbio\OrangeGate\MediaBundle\Entity\GalleryHasMedia:
+    properties:
+        id:
+            type: integer
+            exclude: true
+        media:
+        gallery:
+            type: Symbio\OrangeGate\MediaBundle\Entity\Gallery
+            exclude: true
+        position:
+            type: integer
+        enabled:
+            type: boolean

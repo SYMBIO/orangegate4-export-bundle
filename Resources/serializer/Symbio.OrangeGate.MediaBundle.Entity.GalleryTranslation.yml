@@ -1,0 +1,15 @@
+Symbio\OrangeGate\MediaBundle\Entity\GalleryTranslation:
+    properties:
+        id:
+            type: integer
+            exclude: true
+        name:
+            type: string
+        slug:
+            type: string
+        object:
+            type: Symbio\OrangeGate\MediaBundle\Entity\Gallery
+            exlude: true
+        locale:
+            type: string
+

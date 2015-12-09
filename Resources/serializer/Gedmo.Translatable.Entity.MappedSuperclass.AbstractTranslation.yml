@@ -1,0 +1,5 @@
+Gedmo\Translatable\Entity\MappedSuperclass\AbstractTranslation:
+    properties:
+        id:
+            type: integer
+            exclude: true

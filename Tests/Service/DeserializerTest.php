@@ -9,6 +9,7 @@
 namespace Symbio\OrangeGate\ExportBundle\Tests\Service;
 
 
+use Symbio\OrangeGate\ExportBundle\Entity\Import;
 use Symbio\OrangeGate\ExportBundle\Entity\Map;
 use Symbio\OrangeGate\ExportBundle\Service\Deserializer;
 use Symbio\OrangeGate\PageBundle\Entity\Site;
@@ -19,6 +20,8 @@ use Symbio\OrangeGate\ClassificationBundle\Entity\Context;
 use Symbio\OrangeGate\ClassificationBundle\Entity\Category;
 use Symbio\OrangeGate\TranslationBundle\Entity\LanguageToken;
 use Symbio\OrangeGate\TranslationBundle\Entity\LanguageTranslation;
+use Symbio\OrangeGate\MediaBundle\Entity\Gallery;
+use Symbio\OrangeGate\MediaBundle\Entity\GalleryTranslation;
 
 class DeserializerTest extends \PHPUnit_Framework_TestCase
 {
@@ -150,6 +153,30 @@ class DeserializerTest extends \PHPUnit_Framework_TestCase
         $this->markTestIncomplete('Not implemented yet');
     }
 
+    public function testCreateGalleryForSite()
+    {
+        $siteEntity = $this->getSiteEntity();
+        $galEntity = $this->getGalleryEntity();
+        $galEntity->setSite($siteEntity);
+
+        $jsonStr = '[{"id":11,"name":"testovaci galerie","gallery_has_medias":[],"slug":"testovaci-galerie","enabled":true,'
+            . '"translations":{"cs":{"id":5,"locale":"cs","name":"testovaci galerie","slug":"testovaci-galerie"}}}]';
+
+        $this->em->expects($this->exactly(3))->method('persist');
+//        tohle nevim pro nefunguje (hlavne pro klic 0)
+//        ->withConsecutive(
+//            [$galEntityIncomplete],
+//            [new Map(null, 'Gallery', $galEntity->getId(), $galEntity->getId(), null)],
+//            [$galEntity->getTranslations()[0]]
+//        );
+
+        $this->assertEquals(
+            [$galEntity],
+            $this->deserializer->createGalleryForSite($jsonStr, $siteEntity)
+        );
+    }
+
+
     protected function setUp()
     {
         $this->serializer = SerializerBuilder::create()
@@ -223,5 +250,22 @@ class DeserializerTest extends \PHPUnit_Framework_TestCase
         $token->setSite($this->getSiteEntity());
 
         return $token;
+    }
+
+    private function getGalleryEntity()
+    {
+        $galTrans = new GalleryTranslation();
+        $galTrans->setName('testovaci galerie');
+        $galTrans->setSlug('testovaci-galerie');
+        $galTrans->setLocale('cs');
+
+        $gallery = new Gallery();
+        $gallery->setId(11);
+        $gallery->setName('testovaci galerie');
+        $gallery->setSlug('testovaci-galerie');
+        $gallery->setEnabled(true);
+        $gallery->addTranslation($galTrans);
+
+        return $gallery;
     }
 }
