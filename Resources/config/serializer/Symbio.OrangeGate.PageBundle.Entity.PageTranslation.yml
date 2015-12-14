@@ -1,0 +1,33 @@
+Symbio\OrangeGate\PageBundle\Entity\PageTranslation:
+    properties:
+        id:
+            type: integer
+            exclude: true
+        locale:
+            type: string
+        object:
+            type: Symbio\OrangeGate\PageBundle\Entity\Page
+        createdAt:
+            exlude: true
+        updatedAt:
+            exlude: true
+        routeName:
+            type: string
+        name:
+            type: string
+        title:
+            type: string
+        slug:
+            type: string
+        url:
+            type: string
+        customUrl:
+            type: string
+        metaKeyword:
+            type: string
+        metaDescription:
+            type: string
+        description:
+            type: string
+        enabled:
+            type: boolean

@@ -1,0 +1,21 @@
+Symbio\OrangeGate\PageBundle\Entity\Block:
+    properties:
+        id:
+            type: integer
+        settings:
+            type: array
+        enabled:
+            type: boolean
+
+        # references
+        site:
+            type: Symbio\OrangeGate\PageBundle\Entity\Site
+        page:
+            type: Symbio\OrangeGate\PageBundle\Entity\Page
+        children:
+            type: ArrayCollection<Symbio\OrangeGate\PageBundle\Entity\Block>
+        parent:
+            type: Symbio\OrangeGate\PageBundle\Entity\Block
+            exclude: true
+        translations:
+            type: ArrayCollection<Symbio\OrangeGate\PageBundle\Entity\PageTranslation>

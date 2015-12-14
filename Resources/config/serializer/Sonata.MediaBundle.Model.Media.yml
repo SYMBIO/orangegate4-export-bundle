@@ -1,0 +1,36 @@
+Sonata\MediaBundle\Model\Media:
+    properties:
+        name:
+            type: string
+        description:
+            type: string
+        enabled:
+            type: boolean
+        providerName:
+            type: string
+        providerStatus:
+            type: integer
+        providerReference:
+            type: string
+        providerMetadata:
+            type: array
+        width:
+            type: integer
+        height:
+            type: integer
+        length:
+            type: integer
+        size:
+            type: integer
+        copyright:
+            type: string
+        authorName:
+            type: string
+        context:
+            type: string
+        cdnIsFlushable:
+            type: boolean
+        contentType:
+            type: string
+#        galleryHasMedias:
+

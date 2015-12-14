@@ -173,7 +173,7 @@ class SerializerTest extends \PHPUnit_Framework_TestCase
     protected function setUp()
     {
         $this->serializer = SerializerBuilder::create()
-            ->addMetadataDir(__DIR__ . '/../../Resources/serializer')
+            ->addMetadataDir(__DIR__ . '/../../Resources/conifg/serializer')
             ->build();
 
         $this->em = $this->getMockBuilder('\Doctrine\Common\Persistence\ObjectManager')

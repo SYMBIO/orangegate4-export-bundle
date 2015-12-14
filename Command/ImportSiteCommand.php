@@ -8,7 +8,7 @@
 
 namespace Symbio\OrangeGate\ExportBundle\Command;
 
-use Symbio\OrangeGate\ExportBundle\Event\ExportEvent;
+use Symbio\OrangeGate\ExportBundle\Event\ImportEvent;
 use Symbio\OrangeGate\ExportBundle\Event\ZipErrorEvent;
 use Symbio\OrangeGate\ExportBundle\Event\ZipEvent;
 use Symbio\OrangeGate\ExportBundle\Exception\InvalidArgumentException;
@@ -16,10 +16,10 @@ use Symfony\Bundle\FrameworkBundle\Command\ContainerAwareCommand;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
-use Symbio\OrangeGate\ExportBundle\Service\ZipExporter;
+use Symbio\OrangeGate\ExportBundle\Service\ZipImporter;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
-class ExportSiteCommand extends ContainerAwareCommand implements EventSubscriberInterface
+class ImportSiteCommand extends ContainerAwareCommand implements EventSubscriberInterface
 {
     /**
      * @var null|OutputInterface
@@ -32,7 +32,7 @@ class ExportSiteCommand extends ContainerAwareCommand implements EventSubscriber
     public static function getSubscribedEvents()
     {
         return [
-            'export.db.object.before' => 'beforeExportLog',
+            'import.db.object.before' => 'beforeImportLog',
             'zip.close.before' => 'beforeCloseLog',
             'zip.error' => 'zipErrorLog',
             'zip.file.error' => 'zipErrorLog',
@@ -41,13 +41,13 @@ class ExportSiteCommand extends ContainerAwareCommand implements EventSubscriber
     }
 
     /**
-     * Writes Export event to output if possible
-     * @param ExportEvent $ev
+     * Writes Import event to output if possible
+     * @param ImportEvent $ev
      */
-    public function beforeExportLog(ExportEvent $ev)
+    public function beforeImportLog(ImportEvent $ev)
     {
         if (null !== $this->output) {
-            $this->output->writeln('Exporting ' . $ev->getAction() . '...');
+            $this->output->writeln('Importing ' . $ev->getAction() . '...');
         }
     }
 
@@ -62,15 +62,15 @@ class ExportSiteCommand extends ContainerAwareCommand implements EventSubscriber
     }
 
     /**
-     * Writes log before files starts to be exported
+     * Writes log before files starts to be imported
      */
     public function beforeFilesLog()
     {
-        $this->output->writeln('Exporting media files...');
+        $this->output->writeln('Importing media files...');
     }
 
     /**
-     * Writes Export error event to output if possible
+     * Writes Import error event to output if possible
      * @param ZipErrorEvent $ev
      */
     public function zipErrorLog(ZipErrorEvent $ev)
@@ -86,10 +86,9 @@ class ExportSiteCommand extends ContainerAwareCommand implements EventSubscriber
     protected function configure()
     {
         $this
-            ->setName('orangegate:export:site')
-            ->setDescription('Exports site with given ID.')
+            ->setName('orangegate:import:site')
+            ->setDescription('Imports site with given ID.')
             ->setDefinition([
-                new InputArgument('site_id', InputArgument::REQUIRED, 'Site that you want to export'),
                 new InputArgument('file', InputArgument::REQUIRED, 'Archive fully-qualified file name'),
             ])
         ;
@@ -105,29 +104,25 @@ class ExportSiteCommand extends ContainerAwareCommand implements EventSubscriber
         $this->output = $output;
 
         $filename = $input->getArgument('file');
-        $siteId = $input->getArgument('site_id');
 
-        $exporter = $this->getExporter();
-        $exporter->getEventDispatcher()->addSubscriber($this);
+        $importer = $this->getImporter();
+        $importer->getEventDispatcher()->addSubscriber($this);
 
         try {
-            // load site
-            $site = $this->loadSite($siteId);
 
-            if ($exporter->exportSiteToFile($site, $filename)) {
+            if ($importer->importSiteFromFile($filename)) {
                 $output->writeln('<info>DONE without errors</info>');
             } else {
                 $output->writeln('Done');
             }
         } catch (\Exception $e) {
-            $output->writeln('<error>ERROR exporting site: ' . $e->getMessage() . '</error>');
+            $output->writeln('<error>ERROR importing site: ' . $e->getMessage() . '</error>');
         }
     }
 
     /**
      * @param int $siteId
-     * @return Site
-     * @throws \Exception
+     * @throws InvalidArgumentException
      */
     private function loadSite($siteId)
     {
@@ -142,10 +137,10 @@ class ExportSiteCommand extends ContainerAwareCommand implements EventSubscriber
     }
 
     /**
-     * @return ZipExporter
+     * @return ZipImporter
      */
-    private function getExporter()
+    private function getImporter()
     {
-        return $this->getContainer()->get('orangegate.export.zipexporter');
+        return $this->getContainer()->get('orangegate.export.zipimporter');
     }
 }

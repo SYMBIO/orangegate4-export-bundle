@@ -150,6 +150,8 @@ class DeserializerTest extends \PHPUnit_Framework_TestCase
      */
     public function testCreateCategoryForSiteTree()
     {
+        // todo test import of whole category tree structure
+
         $this->markTestIncomplete('Not implemented yet');
     }
 
@@ -163,7 +165,7 @@ class DeserializerTest extends \PHPUnit_Framework_TestCase
             . '"translations":{"cs":{"id":5,"locale":"cs","name":"testovaci galerie","slug":"testovaci-galerie"}}}]';
 
         $this->em->expects($this->exactly(3))->method('persist');
-//        tohle nevim pro nefunguje (hlavne pro klic 0)
+//        tohle nevim proc nefunguje (hlavne pro klic 0)
 //        ->withConsecutive(
 //            [$galEntityIncomplete],
 //            [new Map(null, 'Gallery', $galEntity->getId(), $galEntity->getId(), null)],
@@ -176,11 +178,73 @@ class DeserializerTest extends \PHPUnit_Framework_TestCase
         );
     }
 
+    public function testCreatePagesForSite()
+    {
+        $siteEntity = $this->getSiteEntity();
+
+        $jsonStr = '{"0":{"id":743,"route_name":"page_slug","request_method":"GET|POST|HEAD|DELETE|PUT","template_code":"subcompany_common",'
+            . '"position":1,"decorate":true,"edited":false,"enabled":true,"name":"\u00davod","url":"\/","children":[{"id":889,'
+            . '"route_name":"page_slug","request_method":"GET|POST|HEAD|DELETE|PUT","template_code":"subcompany_common","position":1,'
+            . '"decorate":true,"edited":false,"enabled":true,"name":"Ke sta\u017een\u00ed","slug":"ke-stazeni","url":"\/ke-stazeni",'
+            . '"children":[],"sources":[],"blocks":[],"snapshots":[],"translations":{"cs":{"id":811,"locale":"cs","enabled":true,'
+            . '"name":"Ke sta\u017een\u00ed","slug":"ke-stazeni","url":"\/ke-stazeni"}},"slugify_method":{}}],"sources":[],'
+            . '"blocks":[{"settings":{"code":"header"},"name":"header","enabled":true,"position":1,"type":"sonata.page.block.container",'
+            . '"id":1569,"children":[{"settings":{"buttonText":"V\u00edce o firm\u011b","buttonLink":"\/o-spolecnosti","companyId":283,'
+            . '"companyDescription":"company_description","template":"AgrofertSubcompanyBundle:Block:homepage-header.html.twig"},"name":"block_name",'
+            . '"enabled":true,"position":1,"type":"subcompany.block.service.homepage.header","id":1684,"children":[],"translations":{'
+            . '"cs":{"id":3154,"locale":"cs","settings":{"buttonText":"V\u00edce o firm\u011b","buttonLink":"\/o-spolecnosti",'
+            . '"companyId":283,"companyDescription":"company_description","template":"AgrofertSubcompanyBundle:Block:homepage-header.html.twig"},'
+            . '"enabled":true}}}],"translations":{"cs":{"id":3025,"locale":"cs","settings":{"code":"header"},"enabled":true}}}],'
+            . '"snapshots":[],"translations":{"cs":{"id":678,"locale":"cs","enabled":true,"name":"\u00davod","url": "\/"}},'
+            . '"slugify_method":{}}}';
+
+        // todo tests, expectations
+        $this->deserializer->createPagesForSite($jsonStr, $siteEntity);
+    }
+
+    public function testCreateMediasForSite()
+    {
+        $siteEntity = $this->getSiteEntity();
+        $jsonStr = '[{"provider_metadata":{"filename":"m6.jpg"},"name":"m6.jpg","enabled":true,"provider_name":"sonata.media.provider.image",'
+            . '"provider_status":1,"provider_reference":"2b54e201a18f8d7f94e025853085a0a18b452e9a.jpeg","width":640,'
+            . '"height":480,"context":"subcompany_product","content_type":"image\/jpeg","size":86447,"id":4193,'
+            . '"gallery_has_medias":[],"category":{"name":"subcompany_product","slug":"subcompany-product","enabled":true,'
+            . '"description":"subcompany_product","created_at":"2015-10-29T09:57:54+0100","updated_at":"2015-10-29T09:57:54+0100",'
+            . '"context":{"name":"subcompany_product","enabled":true,"id":"subcompany_product"},"id":165}}]';
+
+        $repository = $this
+            ->getMockBuilder('\Doctrine\ORM\EntityRepository')
+            ->disableOriginalConstructor()
+            ->getMock();
+        $repository
+            ->expects($this->never())->method('find')
+        ;
+        $repository
+            ->expects($this->once())->method('findBy')
+            ->with([
+                'entity' => 'Category',
+                'oldId' => 165
+            ])
+            ->willReturn($this->getCategoryEntity())
+        ;
+        $this->em->expects($this->once())->method('getRepository')
+            ->with('SymbioOrangeGateExportBundle:Map')
+            ->willReturn($repository)
+        ;
+
+        // todo expectations
+
+        // todo assert return
+
+        $this->deserializer->createMediasForSite($jsonStr, $siteEntity);
+    }
+
+
 
     protected function setUp()
     {
         $this->serializer = SerializerBuilder::create()
-            ->addMetadataDir(__DIR__ . '/../../Resources/serializer')
+            ->addMetadataDir(__DIR__ . '/../../Resources/config/serializer')
             ->build()
         ;
 

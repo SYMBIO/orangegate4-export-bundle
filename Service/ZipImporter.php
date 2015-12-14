@@ -9,7 +9,7 @@
 namespace Symbio\OrangeGate\ExportBundle\Service;
 
 use Symbio\OrangeGate\ExportBundle\Entity\Import;
-use Symbio\OrangeGate\ExportBundle\Event\ExportEvent;
+use Symbio\OrangeGate\ExportBundle\Event\ImportEvent;
 use Symbio\OrangeGate\ExportBundle\Event\ZipErrorEvent;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symbio\OrangeGate\ExportBundle\Exception\InvalidArgumentException;
@@ -35,14 +35,13 @@ class ZipImporter
     /**
      * @var array
      */
-    private $exportOrder = [
-        ['site', 'exportSite'],
-        ['contexts', 'exportContextsForSite'],
-        ['categories', 'exportCategoriesForSite'],
-        ['pages', 'exportPagesForSite'],
-        ['translations', 'exportStringsForSite'],
-        ['gallery', 'exportGalleryForSite'],
-        ['media', 'exportMediaForSite'],
+    private $importOrder = [
+        ['contexts', 'createContextsForSite'],
+        ['categories', 'createCategoriesForSite'],
+        ['translations', 'createStringsForSite'],
+        ['gallery', 'createGalleryForSite'],
+        ['media', 'createMediasForSite'],
+        ['pages', 'createPagesForSite'],
     ];
 
     /**
@@ -61,7 +60,7 @@ class ZipImporter
      * @param string $file
      * @return bool
      */
-    public function importSiteFromFile($site, $file)
+    public function importSiteFromFile($file)
     {
         $this->errCnt = 0;
         try {
@@ -71,10 +70,10 @@ class ZipImporter
             $this->eventDispatcher->dispatch('zip.open.after');
 
             // start new import
-            $this->deserializer->setImport(new Import());
+            $this->deserializer->startImport();
 
             // import db data
-            $this->importDbData($zip, $site);
+            $this->importDbData($zip);
 
             // close archive
             $this->eventDispatcher->dispatch('zip.close.before');
@@ -101,6 +100,26 @@ class ZipImporter
     {
         return $this->errCnt;
     }
+
+    /**
+     * @return EventDispatcher
+     */
+    public function getEventDispatcher()
+    {
+        return $this->eventDispatcher;
+    }
+
+    /**
+     * @param EventDispatcher $eventDispatcher
+     * @return $this
+     */
+    public function setEventDispatcher($eventDispatcher)
+    {
+        $this->eventDispatcher = $eventDispatcher;
+        return $this;
+    }
+
+
     /**
      * Open files for reading. throws Exception when file doesn't exists or cannot bye open.
      * @param string $filename
@@ -121,19 +140,32 @@ class ZipImporter
         return $zip;
     }
 
+    protected function importSite($zip)
+    {
+
+        $ev = new ImportEvent('site');
+        $this->eventDispatcher->dispatch('import.db.object.before', $ev);
+        $data = $zip->getFromName('site.json');
+        $site = $this->deserializer->createSite($data);
+        $this->eventDispatcher->dispatch('import.db.object.after', $ev);
+
+        return $site;
+    }
+
     /**
      * @param \ZipArchive $zip
      * @param string $name
      * @param string $methodName
      * @param int|Site $site
      */
-    protected function exportDbItem($zip, $name, $methodName, $site)
+    protected function importDbItem($zip, $name, $methodName, $site)
     {
-        $ev = new ExportEvent($name);
+        $ev = new ImportEvent($name);
 
-        $this->eventDispatcher->dispatch('export.db.object.before', $ev);
-        $zip->addFromString($name . '.json', $this->serializer->$methodName($site));
-        $this->eventDispatcher->dispatch('export.db.object.after', $ev);
+        $this->eventDispatcher->dispatch('import.db.object.before', $ev);
+        $data = $zip->getFromName($name . '.json');
+        $this->deserializer->$methodName($data, $site);
+        $this->eventDispatcher->dispatch('import.db.object.after', $ev);
     }
 
     /**
@@ -141,9 +173,9 @@ class ZipImporter
      * @param string $archiveFileName
      * @param string $filepath
      */
-    protected function exportFile($zip, $archiveFileName, $filepath)
+    protected function importFile($zip, $archiveFileName, $filepath)
     {
-        $ev = new ExportEvent($filepath);
+        $ev = new ImportEvent($filepath);
 
         $this->eventDispatcher->dispatch('zip.file.before', $ev);
 
@@ -159,14 +191,17 @@ class ZipImporter
 
     /**
      * @param \ZipArchive $zip
-     * @param Site $site
      */
-    protected function exportDbData($zip, $site)
+    protected function importDbData($zip)
     {
         $this->eventDispatcher->dispatch('zip.db.before');
-        foreach ($this->exportOrder as $item) {
-            $this->exportDbItem($zip, $item[0], $item[1], $site);
+
+        $site = $this->importSite($zip);
+
+        foreach ($this->importOrder as $item) {
+            $this->importDbItem($zip, $item[0], $item[1], $site);
         }
+
         $this->eventDispatcher->dispatch('zip.db.after');
     }
 
@@ -174,14 +209,14 @@ class ZipImporter
      * @param \ZipArchive $zip
      * @param Site $site
      */
-    protected function exportMediaFiles($zip, $site)
+    protected function importMediaFiles($zip, $site)
     {
         $dirname = 'uploads';
         $zip->addEmptyDir($dirname);
 
         $this->eventDispatcher->dispatch('zip.files.before');
-        foreach ($this->mediaFileExporter->exportMediaFilesForSite($site) as $filename => $filepath) {
-            $this->exportFile($zip, $dirname . '/' . $filename, $filepath);
+        foreach ($this->mediaFileExporter->importMediaFilesForSite($site) as $filename => $filepath) {
+            $this->importtFile($zip, $dirname . '/' . $filename, $filepath);
         }
         $this->eventDispatcher->dispatch('zip.files.after');
     }

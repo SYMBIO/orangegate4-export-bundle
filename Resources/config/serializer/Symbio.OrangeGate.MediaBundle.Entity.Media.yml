@@ -1,0 +1,10 @@
+Symbio\OrangeGate\MediaBundle\Entity\Media:
+    properties:
+        id:
+            exclude: true
+        galleryHasMedias:
+            type: ArrayCollection<Symbio\OrangeGate\MediaBundle\Entity\GalleryHasMedia>
+        category:
+            type: Symbio\OrangeGate\ClassificationBundle\Entity\Category
+        lang:
+            type: string

@@ -40,7 +40,7 @@ class Serializer
     {
         if ($serializer === NULL) {
            $this->serializer = SerializerBuilder::create()
-            ->addMetadataDir(__DIR__ . '/../Resources/serializer')
+            ->addMetadataDir(__DIR__ . '/../Resources/config/serializer')
             ->build()
         ;
         } else {

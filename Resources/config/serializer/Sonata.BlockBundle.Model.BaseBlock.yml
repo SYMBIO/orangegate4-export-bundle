@@ -1,0 +1,22 @@
+Sonata\BlockBundle\Model\BaseBlock:
+    properties:
+        name:
+            type: string
+        settings:
+            type: array
+        enabled:
+            type: boolean
+        position:
+            type: integer
+        parent:
+            type: Symbio\OrangeGate\PageBundle\Entity\Block
+        children:
+            type: ArrayCollection<Symbio\OrangeGate\PageBundle\Entity\Block>
+        createdAt:
+            exclude: true
+        updatedAt:
+            exclude: true
+        type:
+            type: string
+        ttl:
+            type: integer

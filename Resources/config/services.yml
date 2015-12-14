@@ -14,3 +14,7 @@ services:
     orangegate.export.zipexporter:
         class: Symbio\OrangeGate\ExportBundle\Service\ZipExporter
         arguments: [@orangegate.export.serializer, @orangegate.export.fileexporter]
+
+    orangegate.export.zipimporter:
+        class: Symbio\OrangeGate\ExportBundle\Service\ZipImporter
+        arguments: [@orangegate.export.deserializer]

@@ -1,0 +1,78 @@
+Symbio\OrangeGate\PageBundle\Entity\Page:
+    properties:
+        id:
+            type: integer
+        createdAt:
+            exlude: true
+        updatedAt:
+            exlude: true
+        routeName:
+            type: string
+        pageAlias:
+            type: string
+        type:
+            type: string
+        requestMethod:
+            type: string
+        javascript:
+            type: string
+        rawHeaders:
+            type: string
+        headers:
+            exclude: true
+        templateCode:
+            type: string
+        position:
+            type: integer
+        decorate:
+            type: boolean
+        edited:
+            type: boolean
+        enabled:
+            type: boolean
+        name:
+            type: string
+        title:
+            type: string
+        slug:
+            type: string
+        url:
+            type: string
+        customUrl:
+            type: string
+        metaKeyword:
+            type: string
+        metaDescription:
+            type: string
+        description:
+            type: string
+        cssClass:
+            type: string
+
+        # references
+        site:
+            type: Symbio\OrangeGate\PageBundle\Entity\Site
+        icon:
+            type: Symbio\OrangeGate\MediaBundle\Entity\Media
+        children:
+            type: ArrayCollection<Symbio\OrangeGate\PageBundle\Entity\Page>
+        sources:
+            type: ArrayCollection<Symbio\OrangeGate\PageBundle\Entity\Page>
+            exclude: true
+        parent:
+            type: Symbio\OrangeGate\PageBundle\Entity\Page
+            exclude: true
+        target:
+            type: Symbio\OrangeGate\PageBundle\Entity\Page
+        blocks:
+            type: ArrayCollection<Symbio\OrangeGate\PageBundle\Entity\Block>
+        translations:
+            type: ArrayCollection<Symbio\OrangeGate\PageBundle\Entity\PageTranslation>
+        snapshots:
+            exclude: true
+
+        # class properties
+        # todo what is this good for?
+        slugifyMethod:
+            exclude: true
+            type: string

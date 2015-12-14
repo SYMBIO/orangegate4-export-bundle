@@ -9,11 +9,13 @@
 namespace Symbio\OrangeGate\ExportBundle\Service;
 
 use Symbio\OrangeGate\ExportBundle\Entity\Map;
+use Symbio\OrangeGate\ExportBundle\Exception\InconsistentStateException;
 use Symbio\OrangeGate\ExportBundle\Exception\InvalidArgumentException;
 use Symbio\OrangeGate\PageBundle\Entity\Site;
 use JMS\Serializer\SerializerBuilder;
 use Symbio\OrangeGate\ExportBundle\Entity\Import;
 use Doctrine\Common\Collections\ArrayCollection;
+use Symbio\OrangeGate\PageBundle\Entity\Page;
 
 class Deserializer
 {
@@ -46,9 +48,8 @@ class Deserializer
     {
         if ($serializer === NULL) {
             $this->serializer = SerializerBuilder::create()
-                ->addMetadataDir(__DIR__ . '/../Resources/serializer')
-                ->build()
-            ;
+                ->addMetadataDir(__DIR__ . '/../Resources/config/serializer')
+                ->build();
         } else {
             $this->serializer = $serializer;
         }
@@ -63,14 +64,11 @@ class Deserializer
         return $this->import;
     }
 
-    /**
-     * @param null|Import $import
-     * @return $this
-     */
-    public function setImport($import)
+    public function startImport()
     {
-        $this->import = $import;
-        return $this;
+        $this->import = new Import();
+        $this->entityManager->persist($this->import);
+        $this->entityManager->flush();
     }
 
 
@@ -140,7 +138,6 @@ class Deserializer
             $string->setSite($site);
 
             $this->entityManager->persist($string);
-            $this->entityManager->flush();
 
             foreach ($string->getTranslations() as $translation) {
                 $translation->setLanguageToken($string);
@@ -167,20 +164,68 @@ class Deserializer
 
             $oldId = $gallery->getId();
 
-            $this->entityManager->persist($gallery);
-            $this->entityManager->flush();
-
-            $this->addImportMap('Gallery', $oldId, $gallery->getId());
-
             foreach ($gallery->getTranslations() as $translation) {
                 $translation->setObject($gallery);
-                $this->entityManager->persist($translation);
             }
 
+            $this->entityManager->persist($gallery);
+
             $this->entityManager->flush();
+            $this->addImportMap('Gallery', $oldId, $gallery->getId());
         }
 
         return $items;
+    }
+
+    public function createPagesForSite($inputStr, $site)
+    {
+        $items = $this->serializer->deserialize(
+            $inputStr,
+            'ArrayCollection<Symbio\OrangeGate\PageBundle\Entity\Page>',
+            $this->serializeMethod
+        );
+
+        foreach ($items as $page) {
+            $page->setSite($site);
+            $oldId = $page->getId();
+
+            $this->entityManager->persist($page);
+
+            // todo blocks
+
+            // todo translations
+
+            // todo children
+            $this->entityManager->flush();
+
+            $this->addImportMap('Page', $oldId, $page->getId());
+        }
+
+        return $items;
+    }
+
+    public function createMediasForSite($inputStr)
+    {
+        $items = $this->serializer->deserialize(
+            $inputStr,
+            'ArrayCollection<Symbio\OrangeGate\MediaBundle\Entity\Media>',
+            $this->serializeMethod
+        );
+
+
+        foreach ($items as $media) {
+            $category = $this->findObjectByMap('Category', $media->getCategory()->getId());
+
+            $media->setCategory($category);
+
+            // todo take care of img file
+
+            // todo media has gallery
+
+            $this->entityManager->persist($media);
+        }
+        $this->entityManager->flush();
+
     }
 
     protected function addImportMap($objectName, $oldId, $newId)
@@ -188,6 +233,43 @@ class Deserializer
         $importMap = new Map(null, $objectName, $oldId, $newId, $this->import);
         $this->entityManager->persist($importMap);
         $this->entityManager->flush();
+    }
+
+    protected function findObjectByMap($objectName, $oldId)
+    {
+        switch ($objectName) {
+            case 'Category':
+                $repositoryName = 'SymbioOrangeGateClassificationBundle:Category';
+                break;
+            case 'Gallery':
+                $repositoryName = 'SymbioOrangeGateMediaBundle:Gallery';
+                break;
+            case 'Page':
+                $repositoryName = 'SymbioOrangeGatePageBundle:Page';
+                break;
+            default:
+                throw new \Exception('Unknown map object name: ' . $objectName);
+        }
+
+        $map = $this->entityManager->getRepository('SymbioOrangeGateExportBundle:Map')->findOneBy([
+            'import' => $this->getImport(),
+            'entity' => $objectName,
+            'oldId' => $oldId,
+        ]);
+
+        if (null === $map) {
+            throw new InconsistentStateException('Cannot find map object for oldId: ' . $oldId);
+        }
+
+        $newId = $map->getNewId();
+
+        $object = $this->entityManager->getRepository($repositoryName)->find($newId);
+
+        if (null === $object) {
+            throw new InconsistentStateException('Cannot find category object for newId: ' . $newId);
+        }
+
+        return $object;
     }
 
     protected function categoryRecursiveWalker($categories, &$contextMap, $parent = null)
