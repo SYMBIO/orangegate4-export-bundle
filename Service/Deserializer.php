@@ -96,6 +96,7 @@ class Deserializer
             // persist to db
             $this->entityManager->persist($context);
         }
+
         $this->entityManager->flush();
 
         return $contexts;
@@ -123,6 +124,12 @@ class Deserializer
 
         $this->categoryRecursiveWalker($categories, $contextMap);
 
+        $this->entityManager->flush();
+
+        $this->categoryMapRecursiveWalker($categories);
+
+        $this->entityManager->flush();
+
         return $categories;
     }
 
@@ -143,9 +150,9 @@ class Deserializer
                 $translation->setLanguageToken($string);
                 $this->entityManager->persist($translation);
             }
-
-            $this->entityManager->flush();
         }
+
+        $this->entityManager->flush();
 
         return $strings;
     }
@@ -162,17 +169,22 @@ class Deserializer
             $gallery->setSite($site);
             $gallery->setGalleryHasMedias(new ArrayCollection());
 
-            $oldId = $gallery->getId();
+            $gallery->oldId = $gallery->getId();
 
             foreach ($gallery->getTranslations() as $translation) {
                 $translation->setObject($gallery);
             }
 
             $this->entityManager->persist($gallery);
-
-            $this->entityManager->flush();
-            $this->addImportMap('Gallery', $oldId, $gallery->getId());
         }
+
+        $this->entityManager->flush();
+
+        foreach ($items as $gallery) {
+            $this->addImportMap('Gallery', $gallery->oldId, $gallery->getId());
+        }
+
+        $this->entityManager->flush();
 
         return $items;
     }
@@ -185,21 +197,17 @@ class Deserializer
             $this->serializeMethod
         );
 
-        foreach ($items as $page) {
-            $page->setSite($site);
-            $oldId = $page->getId();
+        $this->pageRecursiveWalker($site, $items);
 
-            $this->entityManager->persist($page);
+        $this->entityManager->flush();
 
-            // todo blocks
+        $this->pageMapRecursiveWalker($items);
 
-            // todo translations
+        $this->entityManager->flush();
 
-            // todo children
-            $this->entityManager->flush();
+        // todo how to solve target and sources?
 
-            $this->addImportMap('Page', $oldId, $page->getId());
-        }
+        // todo page references in blocks
 
         return $items;
     }
@@ -212,7 +220,6 @@ class Deserializer
             $this->serializeMethod
         );
 
-
         foreach ($items as $media) {
             $category = $this->findObjectByMap('Category', $media->getCategory()->getId());
 
@@ -224,6 +231,7 @@ class Deserializer
 
             $this->entityManager->persist($media);
         }
+
         $this->entityManager->flush();
 
     }
@@ -232,7 +240,6 @@ class Deserializer
     {
         $importMap = new Map(null, $objectName, $oldId, $newId, $this->import);
         $this->entityManager->persist($importMap);
-        $this->entityManager->flush();
     }
 
     protected function findObjectByMap($objectName, $oldId)
@@ -277,22 +284,91 @@ class Deserializer
         foreach ($categories as $category) {
             $category->setContext($contextMap[$category->getContext()->getId()]);
 
-            $oldId = $category->getId();
+            $category->oldId = $category->getId();
 
             if (null !== $parent) {
                 $category->setParent($parent);
             }
 
             $this->entityManager->persist($category);
-            $this->entityManager->flush();
 
-            $this->addImportMap('Category', $oldId, $category->getId());
 
             $children = $category->getChildren();
 
             if (null !== $children) {
                 $this->categoryRecursiveWalker($children, $contextMap, $category);
             }
+        }
+    }
+
+    protected function categoryMapRecursiveWalker($categories)
+    {
+        foreach ($categories as $category) {
+            $this->addImportMap('Category', $category->oldId, $category->getId());
+        }
+    }
+
+    protected function blockRecursiveWalker($page, $blocks, $parent = null)
+    {
+        foreach ($blocks as $block)
+        {
+            $block->setSite($page->getSite());
+
+            // this should be solved be exluding in yml...
+            if (null !== $block->getParent()) {
+                $block->setParent(null);
+            }
+            if (null !== $parent) {
+                $block->setParent($parent);
+            }
+
+            foreach ($block->getTranslations() as $translation) {
+                $translation->setObject($block);
+
+                // todo whats this?
+                if ($translation->getLocale() === null) {
+                    throw new \Exception('Unknown locale (ID: ' . $translation->getId() . ') for block ' . $block->getId());
+                }
+
+                $this->entityManager->persist($translation);
+            }
+
+            $this->blockRecursiveWalker($page, $block->getChildren(), $block);
+
+            $this->entityManager->persist($block);
+        }
+    }
+
+    protected function pageRecursiveWalker($site, $pages, $parent = null)
+    {
+        foreach ($pages as $page) {
+            $page->oldId = $page->getId();
+
+            $page->setSite($site);
+
+            if (null !== $parent) {
+                $page->setParent($parent);
+            }
+
+            // blocks
+            $this->blockRecursiveWalker($page, $page->getBlocks());
+
+            // translations
+            foreach ($page->getTranslations() as $translation) {
+                $translation->setObject($page);
+            }
+
+            // children
+            $this->pageRecursiveWalker($site, $page->getChildren(), $page);
+
+            $this->entityManager->persist($page);
+        }
+    }
+
+    protected function pageMapRecursiveWalker($pages)
+    {
+        foreach ($pages as $page) {
+            $this->addImportMap('Page', $page->oldId, $page->getId());
         }
     }
 }

@@ -97,9 +97,9 @@ class SerializerTest extends \PHPUnit_Framework_TestCase
         $site = $this->getSiteEntity();
 
         $this->assertEquals(
-            '{"enabled":true,"name":"\u010cesk\u00e1 vejce","host":"localhost","relative_path":"\/ceska-vejce","is_default":false,"formats":[],'
+            '{"enabled":true,"name":"\u010cesk\u00e1 vejce","host":"localhost","relative_path":"\/ceska-vejce","is_default":false,'
             . '"locale":"cs","language_versions":{"cs":{"enabled":true,"name":"\u010ce\u0161tina","host":"ceskavejce.agrofert.test.symbiodigital.com",'
-            . '"is_default":true,"formats":[],"locale":"cs"}},"slug":"ceska-vejce"}',
+            . '"is_default":true,"locale":"cs"}},"slug":"ceska-vejce"}',
             $this->exporter->exportSite($site)
         );
     }
@@ -160,7 +160,32 @@ class SerializerTest extends \PHPUnit_Framework_TestCase
 
     public function testExportPages()
     {
-        $this->markTestIncomplete('Not implemented yet');
+        $site = $this->getSiteEntity();
+        $page = $this->getRootPageEntity();
+
+        $repository = $this
+            ->getMockBuilder('\Doctrine\ORM\EntityRepository')
+            ->disableOriginalConstructor()
+            ->getMock();
+        $repository
+            ->expects($this->never())->method('find')
+        ;
+        $repository
+            ->expects($this->once())->method('findBy')
+            ->with([
+                'site' => $site,
+                'parent' => null,
+            ])
+            ->willReturn($page)
+        ;
+
+        $this->setEmGetRepository($repository);
+
+        // todo test full example
+        $this->assertEquals(
+            '{"id":1,"route_name":"page_slug","request_method":"GET|POST|HEAD|DELETE|PUT","position":1,"decorate":true,"edited":true,"enabled":false,"children":[],"blocks":[],"translations":[]}',
+            $this->exporter->exportPagesForSite($site)
+        );
     }
 
 
@@ -173,7 +198,7 @@ class SerializerTest extends \PHPUnit_Framework_TestCase
     protected function setUp()
     {
         $this->serializer = SerializerBuilder::create()
-            ->addMetadataDir(__DIR__ . '/../../Resources/conifg/serializer')
+            ->addMetadataDir(__DIR__ . '/../../Resources/config/serializer')
             ->build();
 
         $this->em = $this->getMockBuilder('\Doctrine\Common\Persistence\ObjectManager')
@@ -239,6 +264,11 @@ class SerializerTest extends \PHPUnit_Framework_TestCase
 
     private function getRootPageEntity()
     {
-        //todo
+        $page = new Page();
+        $page->setId(1);
+
+        // todo
+
+        return $page;
     }
 }

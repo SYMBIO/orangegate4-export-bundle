@@ -112,11 +112,14 @@ class ImportSiteCommand extends ContainerAwareCommand implements EventSubscriber
 
             if ($importer->importSiteFromFile($filename)) {
                 $output->writeln('<info>DONE without errors</info>');
+                return 0;
             } else {
                 $output->writeln('Done');
+                return 1;
             }
         } catch (\Exception $e) {
             $output->writeln('<error>ERROR importing site: ' . $e->getMessage() . '</error>');
+            return 2;
         }
     }
 

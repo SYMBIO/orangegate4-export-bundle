@@ -6,6 +6,8 @@ Symbio\OrangeGate\PageBundle\Entity\Block:
             type: array
         enabled:
             type: boolean
+        position:
+            type: integer
 
         # references
         site:
@@ -15,7 +17,7 @@ Symbio\OrangeGate\PageBundle\Entity\Block:
         children:
             type: ArrayCollection<Symbio\OrangeGate\PageBundle\Entity\Block>
         parent:
-            type: Symbio\OrangeGate\PageBundle\Entity\Block
             exclude: true
+            type: Symbio\OrangeGate\PageBundle\Entity\Block
         translations:
-            type: ArrayCollection<Symbio\OrangeGate\PageBundle\Entity\PageTranslation>
+            type: ArrayCollection<Symbio\OrangeGate\PageBundle\Entity\BlockTranslation>

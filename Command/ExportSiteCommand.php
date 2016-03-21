@@ -116,11 +116,14 @@ class ExportSiteCommand extends ContainerAwareCommand implements EventSubscriber
 
             if ($exporter->exportSiteToFile($site, $filename)) {
                 $output->writeln('<info>DONE without errors</info>');
+                return 0;
             } else {
                 $output->writeln('Done');
+                return 1;
             }
         } catch (\Exception $e) {
             $output->writeln('<error>ERROR exporting site: ' . $e->getMessage() . '</error>');
+            return 2;
         }
     }
 

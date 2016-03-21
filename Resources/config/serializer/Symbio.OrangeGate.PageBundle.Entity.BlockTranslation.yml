@@ -1,0 +1,14 @@
+Symbio\OrangeGate\PageBundle\Entity\BlockTranslation:
+    properties:
+        id:
+            type: integer
+            exclude: true
+        locale:
+            type: string
+        object:
+            exclude: true
+            type: Symbio\OrangeGate\PageBundle\Entity\Block
+        enabled:
+            type: boolean
+        settings:
+            type: array

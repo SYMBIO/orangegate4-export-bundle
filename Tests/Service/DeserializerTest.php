@@ -92,6 +92,8 @@ class DeserializerTest extends \PHPUnit_Framework_TestCase
         $siteEntity = $this->getSiteEntity();
         $contextEntity = $this->getContextEntity();
         $categoryEntity = $this->getCategoryEntity();
+        $resCategory = clone $categoryEntity;
+        $resCategory->oldId = $resCategory->getId();
 
         $repository = $this
             ->getMockBuilder('\Doctrine\ORM\EntityRepository')
@@ -111,13 +113,13 @@ class DeserializerTest extends \PHPUnit_Framework_TestCase
             ->willReturn($repository)
         ;
         $this->em->expects($this->exactly(2))->method('persist')
-            ->withConsecutive([$categoryEntity], [new Map(null, 'Category', 166, 166, null)]);
+            ->withConsecutive([$resCategory], [new Map(null, 'Category', 166, 166, null)]);
         $this->em->expects($this->exactly(2))->method('flush');
 
         $testJson = '[{"name":"Soubory","slug":"soubory","enabled":true,"context":{"name":"\u010cesk\u00e1 vejce","enabled":true,"id":"ceskavejce"},"id":166}]';
 
         $this->assertEquals(
-            [$categoryEntity],
+            [$resCategory],
             $this->deserializer->createCategoriesForSite($testJson, $siteEntity)
         );
     }
@@ -136,7 +138,7 @@ class DeserializerTest extends \PHPUnit_Framework_TestCase
 
         $this->em->expects($this->exactly(2))->method('persist');
 //            ->withConsecutive([$tokenEntity], [$translationEntity]);
-        $this->em->expects($this->exactly(2))->method('flush');
+        $this->em->expects($this->exactly(1))->method('flush');
 
 
         $this->assertEquals(
@@ -160,11 +162,12 @@ class DeserializerTest extends \PHPUnit_Framework_TestCase
         $siteEntity = $this->getSiteEntity();
         $galEntity = $this->getGalleryEntity();
         $galEntity->setSite($siteEntity);
+        $galEntity->oldId = 11;
 
         $jsonStr = '[{"id":11,"name":"testovaci galerie","gallery_has_medias":[],"slug":"testovaci-galerie","enabled":true,'
             . '"translations":{"cs":{"id":5,"locale":"cs","name":"testovaci galerie","slug":"testovaci-galerie"}}}]';
 
-        $this->em->expects($this->exactly(3))->method('persist');
+        $this->em->expects($this->exactly(2))->method('persist');
 //        tohle nevim proc nefunguje (hlavne pro klic 0)
 //        ->withConsecutive(
 //            [$galEntityIncomplete],
@@ -217,18 +220,22 @@ class DeserializerTest extends \PHPUnit_Framework_TestCase
             ->disableOriginalConstructor()
             ->getMock();
         $repository
-            ->expects($this->never())->method('find')
-        ;
-        $repository
-            ->expects($this->once())->method('findBy')
+            ->expects($this->once())->method('findOneBy')
             ->with([
                 'entity' => 'Category',
-                'oldId' => 165
+                'oldId' => 165,
+                'import' => null
             ])
+            ->willReturn(new Map(1, 'Category', 165, 166, null))
+        ;
+        $repository
+            ->expects($this->once())->method('find')
+            ->with(166)
             ->willReturn($this->getCategoryEntity())
         ;
-        $this->em->expects($this->once())->method('getRepository')
-            ->with('SymbioOrangeGateExportBundle:Map')
+        $this->em->expects($this->exactly(2))
+            ->method('getRepository')
+            ->withConsecutive(['SymbioOrangeGateExportBundle:Map'], ['SymbioOrangeGateClassificationBundle:Category'])
             ->willReturn($repository)
         ;
 
